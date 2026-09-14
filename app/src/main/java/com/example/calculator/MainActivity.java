@@ -1,10 +1,10 @@
 package com.example.calculator;
 
 import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
+
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -20,6 +20,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         display = findViewById(R.id.display);
 
+        // Цифры 0-9
         int[] digits = {R.id.btn0, R.id.btn1, R.id.btn2, R.id.btn3, R.id.btn4,
                 R.id.btn5, R.id.btn6, R.id.btn7, R.id.btn8, R.id.btn9};
         for (int i = 0; i < digits.length; i++) {
@@ -27,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
             findViewById(digits[i]).setOnClickListener(v -> onDigit(d));
         }
 
+        // Остальные кнопки
         findViewById(R.id.btnDot).setOnClickListener(v -> onDot());
         findViewById(R.id.btnC).setOnClickListener(v -> onClear());
         findViewById(R.id.btnDel).setOnClickListener(v -> onDelete());
@@ -39,14 +41,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onDigit(String d) {
-        if (newInput) { current = ""; newInput = false; }
+        if (newInput) {
+            current = "";
+            newInput = false;
+        }
         if (current.equals("0")) current = d;
         else current += d;
-        display.setText(current);
+        display.setText(current.isEmpty() ? "0" : current);
     }
 
     private void onDot() {
-        if (newInput) { current = "0"; newInput = false; }
+        if (newInput) {
+            current = "0";
+            newInput = false;
+        }
         if (!current.contains(".")) current += ".";
         display.setText(current);
     }
@@ -60,14 +68,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onDelete() {
-        if (current.length() > 0) current = current.substring(0, current.length() - 1);
+        if (newInput) return;
+        if (current.length() > 0) {
+            current = current.substring(0, current.length() - 1);
+        }
         display.setText(current.isEmpty() ? "0" : current);
     }
 
     private void onOp(String op) {
         if (!current.isEmpty()) {
-            if (!operator.isEmpty()) calc();
-            else firstNum = Double.parseDouble(current);
+            if (!operator.isEmpty()) {
+                calc();
+            } else {
+                firstNum = Double.parseDouble(current);
+            }
             operator = op;
             newInput = true;
         }
@@ -78,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
             double v = Double.parseDouble(current) / 100.0;
             current = format(v);
             display.setText(current);
+            newInput = true;
         }
     }
 
@@ -93,13 +108,28 @@ public class MainActivity extends AppCompatActivity {
         double second = Double.parseDouble(current);
         double result;
         switch (operator) {
-            case "+": result = firstNum + second; break;
-            case "-": result = firstNum - second; break;
-            case "*": result = firstNum * second; break;
+            case "+":
+                result = firstNum + second;
+                break;
+            case "-":
+                result = firstNum - second;
+                break;
+            case "*":
+                result = firstNum * second;
+                break;
             case "/":
-                if (second == 0) { display.setText("Ошибка"); current = ""; operator=""; newInput=true; return; }
-                result = firstNum / second; break;
-            default: return;
+                if (second == 0) {
+                    display.setText("Ошибка");
+                    current = "";
+                    operator = "";
+                    firstNum = 0;
+                    newInput = true;
+                    return;
+                }
+                result = firstNum / second;
+                break;
+            default:
+                return;
         }
         firstNum = result;
         current = format(result);
@@ -108,6 +138,9 @@ public class MainActivity extends AppCompatActivity {
 
     private String format(double v) {
         if (v == (long) v) return String.valueOf((long) v);
-        return String.valueOf(v);
+        // Округляем до 8 знаков после запятой и убираем хвостовые нули
+        String s = String.format(Locale.US, "%.8f", v);
+        s = s.replaceAll("0+$", "").replaceAll("\\.$", "");
+        return s;
     }
 }
